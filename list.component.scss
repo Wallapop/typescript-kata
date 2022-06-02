@@ -1,0 +1,90 @@
+@import "~style/common";
+
+tsl-spinner {
+  width: 100%;
+}
+
+.edit-profile-btn {
+  appearance: none;
+  border: thin solid rgba($blue-grey-4, 0.5);
+  color: $blue-grey-2;
+  background: none;
+  border-radius: 10px;
+  font-size: $font-size-xs;
+  min-width: 50px !important;
+  height: 32px;
+  margin: -32px;
+
+  .page-container {
+    .content {
+      .profile {
+        display: block;
+
+        /* IE, Edge and Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+
+        /* Chrome, Safari and Opera */
+        &::-webkit-scrollbar {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+.info {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-s;
+  tsl-svg-icon {
+    ::ng-deep svg path {
+      fill: $walla-main;
+    }
+    margin-right: $spacing-ms;
+  }
+  a {
+    text-decoration: underline;
+    cursor: pointer;
+    color: $walla-main;
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+div {
+  border: 1px solid "#fff";
+}
+
+// .items {
+//   margin-top: $spacing-ml;
+//   margin-bottom: $spacing-xxxl * 2;
+// }
+
+#profile-empty-state {
+  padding: 100px 0px;
+  width: 100%;
+}
+
+#catalog-empty-state {
+  padding: 100px 0px;
+  width: 100%;
+}
+
+.wing-size {
+  width: fit-content;
+  height: fit-content;
+}
+
+.logout {
+  color: $blue-grey-2 !important;
+}
+
+.List__selectedItems {
+  position: sticky;
+  bottom: 0;
+  z-index: $tabbar-z-index + 1;
+}
