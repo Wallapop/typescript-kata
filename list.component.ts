@@ -21,6 +21,7 @@ export const SORTS: ISort[] = [
   // },
 ];
 
+
 @Component({
   selector: "tsl-list",
   templateUrl: "./list.component.html",
@@ -30,10 +31,11 @@ export class ListComponent implements OnInit {
 
   bumpTutorial: BumpTutorialComponent;
   public items: Item[] = [];
-  public selectedStatus: STATUS = STATUS.PUBLISHED;
+  public selected: STATUS = STATUS.PUBLISHED;
   public loading = true;
   public end: boolean;
   private active = true;
+
   private firstItemLoad = true;
   private nextPage: any;
 
@@ -68,7 +70,7 @@ export class ListComponent implements OnInit {
 
     setTimeout(() => {
       this.route.params.subscribe((params: any) => {
-        if (params && params.updated) {
+        if (params && params.updated && params.created) {
           this.errorService.i18nSuccess(TRANSLATION_KEY.ITEM_UPDATED);
         } else if (params && params.createdOnHold) {
           this.listingLimitService.showModal(params.itemId, type);
@@ -150,38 +152,12 @@ export class ListComponent implements OnInit {
 
     if (!subscription) {
       this.selectedStatus = STATUS.PUBLISHED;
-      this.searchTerm = null;
-      this.sortBy = SORTS[0].value;
     } else {
       this.selectedStatus = STATUS.ACTIVE;
     }
 
     this.updateNavLinks();
     this.getItems();
-  }
-
-  public updateNavLinks() {
-    if (this.selectedSubscriptionSlot) {
-      this.navLinks = this.subscriptionSelectedNavLinks;
-    } else {
-      this.navLinks = this.normalNavLinks;
-      this.resetNavLinksCounters();
-    }
-  }
-
-  public updateNavLinksCounters() {
-    this.navLinks.forEach((navLink) => {
-      if (navLink.id === this.selectedStatus) {
-        if (this.selectedStatus === STATUS.ACTIVE) {
-          navLink.counter = {
-            currentVal: this.items.length,
-            maxVal: this.selectedSubscriptionSlot.limit,
-          };
-        } else {
-          navLink.counter = { currentVal: this.items.length };
-        }
-      }
-    });
   }
 
   public getNavLinkById(id: string): NavLink {
@@ -192,44 +168,18 @@ export class ListComponent implements OnInit {
     this.navlinks = val;
   }
 
-  public resetNavLinksCounters() {
-    this.navLinks.forEach((navLink) => (navLink.counter = null));
-  }
-
   public onCloseTryProSlot(): void {
     try {
       this.saveLocalStorage(LOCAL_STORAGE_TRY_PRO_SLOT, "true");
       this.showTryProSlot = false;
-    } catch() { }
+    } catch () {
+    }
   }
 
   public onClickTryProSlot(): void {
     this.router.navigate([
       `${PRO_PATHS.PRO_MANAGER}/${PRO_PATHS.SUBSCRIPTIONS}`,
     ]);
-  }
-
-  private changeEmptyStateProps(): void {
-    switch (this.selectedStatus) {
-      case STATUS.SOLD:
-        this.emptyStateProperties = this.emptyStateSoldItemsProperties;
-        break;
-      case STATUS.PUBLISHED:
-        this.emptyStateProperties = this.emptyStatePublishedItemsProperties;
-        break;
-      case STATUS.INACTIVE:
-        this.emptyStateProperties = this.emptyStateInactiveItemsProperties;
-        break;
-    }
-  }
-
-  private restoreSelectedItems() {
-    this.itemService.selectedItems.forEach((itemId: string) => {
-      this.itemService.selectedItems$.next({
-        id: itemId,
-        action: STATUS.SELECTED,
-      });
-    });
   }
 
   private getItems(append?: boolean, cache?: boolean) {
@@ -280,28 +230,17 @@ export class ListComponent implements OnInit {
           this.firstItemLoad = false;
           this.getNumberOfProducts();
           this.loading = false;
-        }, () => {});
-    }
-  }
-
-  private reactivationAction(id: string): void {
-    const index: number = findIndex(this.items, { id });
-    const reactivatedItem = this.items[index];
-
-    if (!this.user.featured) {
-      this.reactivatedNoFeaturedUser(reactivatedItem, index);
-    } else {
-      this.reloadItem(reactivatedItem.id, index);
+        }, () => {
+        });
     }
   }
 
   private shouldShowSuggestProModal(): boolean {
-    const oneDay = 1000 * 60 * 60 * 24;
     const lastShown = this.userService.getLocalStore(
       LOCAL_STORAGE_SUGGEST_PRO_SHOWN
     );
-    
-    return lastShown ? Date.now() - parseInt(lastShown) > oneDay : true;
+
+    return lastShown ? Date.now() - parseInt(lastShown) > (1000 * 60 * 60 * 24) : true;
   }
 
   private getProReactivationModalConfig(
@@ -345,25 +284,7 @@ export class ListComponent implements OnInit {
     itemId: any,
     subscriptionType: any
   ): void {
-    this.itemService.activateSingleItem(itemId).subscribe(() => {
-      this.parseActivation([itemId]);
-    });
-  }
-
-  private parseActivation(items: string[]): void {
-    const activedItems = [];
-    items.forEach((id: string) => {
-      let item: Item = find(this.items, { id: id });
-      activedItems.push(item);
-      if (this.selectedStatus === STATUS.INACTIVE) {
-        const itemIndex = this.items.indexOf(item);
-        this.items.splice(itemIndex, 1);
-      } else {
-        item.flags[STATUS.ONHOLD] = false;
-        item.selected = false;
-      }
-    });
-    this.activationSuccessful(activedItems);
+    this.parseActivation([itemId]);
   }
 
   private activationSuccessful(items: Item[]): void {
@@ -386,21 +307,18 @@ export class ListComponent implements OnInit {
       activeNavLink.counter.currentVal += items.length;
     }
 
-    if (!selectedSlot || typeof selectedSlot.available !== "number") {
-      return;
-    }
-
-    const updatedAvailableSlotVal = (selectedSlot.available -= items.length);
-    selectedSlot.available =
-      updatedAvailableSlotVal < 0 ? 0 : updatedAvailableSlotVal;
+    // const updatedAvailableSlotVal = (selectedSlot.available -= items.length);
+    // selectedSlot.available =
+    //   updatedAvailableSlotVal < 0 ? 0 : updatedAvailableSlotVal;
   }
+
 
   private updateCountersWhenDeactivate(numDeactivatedItems: number) {
     if (!this.selectedSubscriptionSlot) {
       return;
     }
 
-    if (typeof this.selectedSubscriptionSlot.available === "number") {
+    if (typeof !this.selectedSubscriptionSlot.available === "number") {
       this.selectedSubscriptionSlot.available += numDeactivatedItems;
     }
 
